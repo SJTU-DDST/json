@@ -745,6 +745,21 @@ auto from_json_array_impl(const BasicJsonType& j, CompatibleArrayType& arr, prio
     });
 }
 
+// Supporting conversion from json array to `std::array`.
+template<typename BasicJsonType, typename T, size_t N>
+void from_json_array_impl(const BasicJsonType& j, std::array<T, N>& arr, priority_tag<0>)
+{
+    using std::begin;
+    using std::end;
+
+    std::transform(j.begin(), j.begin() + std::min(j.size(), N), begin(arr), [](const BasicJsonType & i)
+    {
+        // get<BasicJsonType>() returns *this, this won't call a from_json
+        // method when value_type is BasicJsonType
+        return i.template get<typename std::array<T, N>::value_type>();
+    });
+}
+
 template<typename BasicJsonType, typename CompatibleArrayType,
          enable_if_t<is_compatible_array_type<BasicJsonType, CompatibleArrayType>::value and
                      not std::is_same<typename BasicJsonType::array_t, CompatibleArrayType>::value, int> = 0>
